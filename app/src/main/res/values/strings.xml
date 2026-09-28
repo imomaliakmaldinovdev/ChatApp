@@ -8,7 +8,7 @@ one message at a time.</string>
 <string name="chats">Chats</string>
 <string name="empty_chats">Your conversations will appear here.</string>
 <string name="sign_out">Sign out</string>
-<string name="backend_missing">Development setup: Firebase configuration is missing. Follow docs/BACKEND.md.</string>
+<string name="backend_missing">Development setup: Waiting for google-services.json. Local setup is ready; see docs/BACKEND.md.</string>
 <string name="backend_ready">Development setup: Firebase client configured. Cloud connectivity has not been verified.</string>
 <string name="backend_emulator">Development setup: using local Firebase emulators.</string>
 <string name="backend_invalid">Development setup: Firebase could not initialize. Check the client configuration.</string>

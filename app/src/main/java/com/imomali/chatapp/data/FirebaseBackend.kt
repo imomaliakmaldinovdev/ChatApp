@@ -11,15 +11,31 @@ import com.imomali.chatapp.BuildConfig
 class FirebaseBackend private constructor(val auth: FirebaseAuth?, val database: FirebaseFirestore?, val state: State) {
     enum class State { NOT_CONFIGURED, CONFIGURED, EMULATOR, INVALID }
     companion object {
+        private fun legacyOptions(): FirebaseOptions? {
+            val values = listOf(BuildConfig.FIREBASE_PROJECT_ID, BuildConfig.FIREBASE_APPLICATION_ID, BuildConfig.FIREBASE_API_KEY)
+            if (values.all { it.isBlank() }) return null
+            require(values.none { it.isBlank() }) { "Incomplete Firebase client configuration" }
+            return FirebaseOptions.Builder()
+                .setProjectId(BuildConfig.FIREBASE_PROJECT_ID)
+                .setApplicationId(BuildConfig.FIREBASE_APPLICATION_ID)
+                .setApiKey(BuildConfig.FIREBASE_API_KEY)
+                .build()
+        }
+
         fun create(context: Context): FirebaseBackend {
             val emulator = BuildConfig.DEBUG && BuildConfig.USE_EMULATORS
-            if (!emulator && listOf(BuildConfig.FIREBASE_PROJECT_ID, BuildConfig.FIREBASE_APPLICATION_ID, BuildConfig.FIREBASE_API_KEY).any { it.isBlank() })
-                return FirebaseBackend(null, null, State.NOT_CONFIGURED)
             return try {
-                val options = FirebaseOptions.Builder()
-                    .setProjectId(if (emulator) "demo-chat-app" else BuildConfig.FIREBASE_PROJECT_ID)
-                    .setApplicationId(if (emulator) "1:123456789:android:demo" else BuildConfig.FIREBASE_APPLICATION_ID)
-                    .setApiKey(if (emulator) "demo-key-not-a-real-credential" else BuildConfig.FIREBASE_API_KEY).build()
+                val options = when {
+                    emulator -> FirebaseOptions.Builder()
+                        .setProjectId("demo-chat-app")
+                        .setApplicationId("1:123456789:android:demo")
+                        .setApiKey("demo-key-not-a-real-credential")
+                        .build()
+                    else -> FirebaseOptions.fromResource(context) ?: legacyOptions()
+                } ?: return FirebaseBackend(null, null, State.NOT_CONFIGURED)
+                if (options.projectId.isNullOrBlank() || options.apiKey.isNullOrBlank()) {
+                    return FirebaseBackend(null, null, State.INVALID)
+                }
                 val app = FirebaseApp.initializeApp(context, options, "chat-app")
                 val auth = FirebaseAuth.getInstance(app)
                 val db = FirebaseFirestore.getInstance(app)
