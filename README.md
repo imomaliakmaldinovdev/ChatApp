@@ -11,7 +11,7 @@ Android Studio creates local.properties with your SDK path. It is intentionally 
 
 ## Backend modes
 With no configuration, the app starts safely without Firebase and explains setup in DEBUG builds. It never reports successful cloud connection just because the SDK initialized.
-Copy firebase.properties.example to firebase.properties for local emulators or a real Firebase Android client configuration. See docs/BACKEND.md. No secrets or admin keys belong in this Android app.
+When received, put the teacher’s google-services.json in app/ and sync Gradle. For local emulator mode, copy firebase.properties.example to firebase.properties and set useEmulators=true. See docs/BACKEND.md. No secrets or admin keys belong in this Android app.
 
 ## Documentation
 - docs/SCOPE.md — UI reference and reduced five-day scope
