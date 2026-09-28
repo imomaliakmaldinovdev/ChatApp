@@ -1,0 +1,12 @@
+*.iml
+.gradle/
+.kotlin/
+.idea/
+**/build/
+local.properties
+firebase.properties
+**/google-services.json
+node_modules/
+*-debug.log
+.firebase/
+.DS_Store

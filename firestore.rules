@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function member(conversationId) {
+      return signedIn() && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.memberIds;
+    }
+    function validProfile() {
+      let p = request.resource.data;
+      return p.keys().hasAll(['displayName','searchName','bio'])
+        && p.keys().hasOnly(['displayName','searchName','bio'])
+        && p.displayName is string && p.displayName.size() > 0 && p.displayName.size() <= 60
+        && p.searchName is string && p.searchName == p.displayName.lower()
+        && p.bio is string && p.bio.size() <= 160;
+    }
+    match /profiles/{uid} {
+      // These are intentionally public-to-signed-in discovery fields only.
+      allow read: if signedIn();
+      allow create, update: if signedIn() && request.auth.uid == uid && validProfile();
+      allow delete: if false;
+    }
+    match /conversations/{id} {
+      allow read: if signedIn() && request.auth.uid in resource.data.memberIds;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasAll(['memberIds','createdAt'])
+        && request.resource.data.keys().hasOnly(['memberIds','createdAt'])
+        && request.resource.data.memberIds is list
+        && request.resource.data.memberIds.size() == 2
+        && request.resource.data.memberIds[0] is string
+        && request.resource.data.memberIds[1] is string
+        && request.resource.data.memberIds[0] < request.resource.data.memberIds[1]
+        && request.auth.uid in request.resource.data.memberIds
+        && id == request.resource.data.memberIds[0] + ':' + request.resource.data.memberIds[1]
+        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.memberIds[0]))
+        && exists(/databases/$(database)/documents/profiles/$(request.resource.data.memberIds[1]))
+        && request.resource.data.createdAt == request.time;
+      // Membership and creation time are immutable in the private-chat MVP.
+      allow update, delete: if false;
+      match /messages/{messageId} {
+        allow read: if member(id);
+        allow create: if member(id)
+          && request.resource.data.keys().hasAll(['senderId','text','createdAt'])
+          && request.resource.data.keys().hasOnly(['senderId','text','createdAt'])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 4000
+          && request.resource.data.text.matches('(?s).*[^\\s].*')
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

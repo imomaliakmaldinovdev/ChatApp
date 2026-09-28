@@ -1,0 +1,2 @@
+<resources><style name="Theme.ChatApp" parent="Theme.MaterialComponents.Light.NoActionBar">
+<item name="colorPrimary">#7265E6</item><item name="colorPrimaryVariant">#5143BC</item><item name="colorOnPrimary">#FFFFFF</item><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">true</item><item name="android:windowBackground">#F7F7FC</item></style></resources>

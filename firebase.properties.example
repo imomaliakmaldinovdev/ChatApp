@@ -1,0 +1,8 @@
+# Public client configuration from Firebase console > Android app settings.
+# Never put a service-account key, admin credential or private signing key here.
+projectId=
+applicationId=
+apiKey=
+# Local Android emulator only. Cloud config is unnecessary when true.
+useEmulators=false
+emulatorHost=10.0.2.2

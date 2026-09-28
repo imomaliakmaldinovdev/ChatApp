@@ -1,0 +1,15 @@
+<resources>
+<string name="app_name">Chat App</string>
+<string name="welcome">A little closer,
+one message at a time.</string>
+<string name="subtitle">Your space for simple, private conversations.</string>
+<string name="foundation">Project foundation ready</string>
+<string name="foundation_detail">Login and registration are the next development milestone.</string>
+<string name="chats">Chats</string>
+<string name="empty_chats">Your conversations will appear here.</string>
+<string name="sign_out">Sign out</string>
+<string name="backend_missing">Development setup: Firebase configuration is missing. Follow docs/BACKEND.md.</string>
+<string name="backend_ready">Development setup: Firebase client configured. Cloud connectivity has not been verified.</string>
+<string name="backend_emulator">Development setup: using local Firebase emulators.</string>
+<string name="backend_invalid">Development setup: Firebase could not initialize. Check the client configuration.</string>
+</resources>
