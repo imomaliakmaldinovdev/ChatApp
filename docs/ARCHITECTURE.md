@@ -1,8 +1,9 @@
 # Architecture
 One Android app module, Kotlin + XML ViewBinding and Material components. Keep the first week small; split modules only when boundaries justify it.
 
-- MainActivity: foundation UI and lifecycle-scoped session subscription.
-- navigation/SessionRouter: pure routing policy. WELCOME is public; CHATS, PROFILE and CONVERSATION require a session. Signed-in welcome resolves to chats. Actual login, registration and feature screen rendering come in subsequent tasks. Do not expose unguarded deep links.
+- MainActivity: accessible login/registration forms, local validation, and lifecycle-scoped observation of AuthViewModel. Password fields opt out of saved view state and are cleared on submission, mode changes and logout.
+- AuthViewModel: survives rotation, owns one in-flight Firebase request, observes auth state, verifies restored sessions against the server, creates the required public profile before exposing chats, and supports recovery from interrupted registration. Request generations reject obsolete callbacks after logout. No password or Activity is retained. Server failures keep protected screens closed. Firebase persists its own session credentials; the app stores no passwords.
+- navigation/SessionRouter: pure routing policy. WELCOME is public; CHATS, PROFILE and CONVERSATION require a session. The activity currently renders authentication or a chats placeholder only after the ViewModel verifies the session and profile. Do not expose unguarded deep links.
 - domain/Models: immutable profile/conversation/message data and message length policy.
 - domain/Repositories: auth/profile/conversation/message contracts. Subscribe methods return closeable handles; close on screen exit/logout. Messaging contracts intentionally have no fake-success implementation.
 - data/FirebaseBackend: named Firebase client, explicit config status, emulator isolation and memory-only Firestore cache.
