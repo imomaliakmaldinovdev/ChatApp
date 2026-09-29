@@ -1,5 +1,5 @@
 # Chat App
-Native Android private messaging MVP. Monday foundation implemented; login/registration UI and messaging are later milestones, not functional features yet.
+Native Android private messaging MVP. Monday foundation and Tuesday login/registration are implemented. Email/password authentication, session checks, logout, and profile recovery use Firebase. Messaging remains a later milestone.
 
 ## Open and build
 Open this directory in Android Studio. Use its bundled JDK 21 (or newer supported JDK), SDK 36, and Gradle wrapper 9.4.1. Android Gradle Plugin 9.2.1 provides built-in Kotlin. Min SDK 24; target SDK 36.
@@ -7,7 +7,7 @@ Open this directory in Android Studio. Use its bundled JDK 21 (or newer supporte
 ```sh
 ./gradlew assembleDebug testDebugUnitTest lintDebug
 ```
-Android Studio creates local.properties with your SDK path. It is intentionally ignored. Dependencies need internet on the first build. Run the app configuration on an Android emulator/device; the initial screen is a foundation screen, not simulated authentication.
+Android Studio creates local.properties with your SDK path. It is intentionally ignored. Dependencies need internet on the first build. Run the app configuration on an Android emulator/device. Without Firebase configuration, the forms validate input and explain that setup is pending; they never simulate successful authentication.
 
 ## Backend modes
 With no configuration, the app starts safely without Firebase and explains setup in DEBUG builds. It never reports successful cloud connection just because the SDK initialized.
@@ -20,6 +20,7 @@ When received, put the teacher’s google-services.json in app/ and sync Gradle.
 - docs/BACKEND.md — local testing and pending cloud setup
 - CONTRIBUTING.md — GitFlow and verification
 - docs/MONDAY_STATUS.md — actual verification and outstanding work
+- docs/TUESDAY_STATUS.md — authentication implementation and verification
 
 Trello: https://trello.com/b/CXiHwZj7/chat-app
 Plan: https://trello.com/c/34sHAx3P
