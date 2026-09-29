@@ -29,6 +29,6 @@ The chats screen is a placeholder; Wednesday's conversation work is not included
 
 - Teacher's google-services.json, matching com.imomali.chatapp. Confirm Email/Password authentication and the intended database/rules before live verification. No cloud deployment performed.
 - Trello updates are blocked by the locked Mac / unavailable Chrome connection. Planned updates: Login UI and Registration UI to DONE; Authentication integration remains pending live verification, with emulator-tested implementation recorded.
-- No GitHub remote exists, so this work has not been pushed.
+- Published to the private GitHub repository https://github.com/imomaliakmaldinovdev/ChatApp. Both master and develop are pushed; develop is the default branch and contains the current app implementation.
 
 UI reference remains Chatvia Light: https://themesbrand.com/chatvia/layouts/index.html. Native Material screens use the clean messaging style without copying template assets.

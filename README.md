@@ -24,3 +24,5 @@ When received, put the teacher’s google-services.json in app/ and sync Gradle.
 
 Trello: https://trello.com/b/CXiHwZj7/chat-app
 Plan: https://trello.com/c/34sHAx3P
+
+GitHub: https://github.com/imomaliakmaldinovdev/ChatApp (private). The default branch, develop, contains current development work. master remains the stable baseline; feature branches start from develop and merge back after testing.
