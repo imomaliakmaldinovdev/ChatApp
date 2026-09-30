@@ -10,7 +10,7 @@ git switch -c feature/auth
 git switch develop
 git merge --no-ff feature/auth
 ```
-Run ./gradlew assembleDebug testDebugUnitTest lintDebug and pnpm test:rules for relevant changes. Validate the app on an emulator/device before a release. Only merge develop into master when release criteria pass; tag actual releases. Never force-push, delete history, or commit local.properties, firebase.properties, tokens or service-account keys.
+Run ./gradlew assembleDebug testDebugUnitTest lintDebug. For security/backend changes, run the Kotlin FirestoreRulesTest suite against local Auth and Firestore emulators using the commands in docs/BACKEND.md. No project JavaScript dependencies are required. Validate the app on an emulator/device before a release. Only merge develop into master when release criteria pass; tag actual releases. Never force-push, delete history, or commit local.properties, firebase.properties, tokens or service-account keys.
 
 Local master starts with the project charter only: no unverified app code is designated release-ready. Monday implementation is committed on develop. No remote is configured until the owner provides the repository URL. Do not create feature branches until needed.
 
