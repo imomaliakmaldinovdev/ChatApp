@@ -6,7 +6,9 @@ Fields: displayName (1–60 chars), searchName (displayName.lower()), bio (0–1
 
 ## conversations/{pairId}
 Fields: memberIds (exactly two distinct UIDs sorted lexicographically), createdAt. ID: sorted UID1 + ':' + UID2. Use standard Firebase-generated email/password UIDs. Membership and metadata immutable in MVP. Deterministic ID prevents duplicate conversations. If creation races, read existing record after conflict rather than overwriting it.
-List query MUST include whereArrayContains("memberIds", currentUid); an unfiltered query is denied. Composite memberIds/createdAt descending index supplied. Latest-message previews/activity ordering require Wednesday repository work, not yet implemented. Do not trust client-supplied sender identities or membership updates.
+List query MUST include whereArrayContains("memberIds", currentUid); an unfiltered query is denied. Composite memberIds/createdAt descending index supplied. The discovery repository attaches one public-profile listener and one latest-message listener (createdAt descending, limit 1) per conversation, then sorts by latest message time with creation time as fallback. This small MVP observes all member conversations; pagination and listener cost optimization are deferred. Do not trust client-supplied sender identities or membership updates.
+
+Search normalizes with Locale.ROOT, trims the input, debounces 300 ms, and returns up to 20 public profiles excluding self. It is name-prefix search, not substring/fuzzy search. Superseded responses cannot overwrite newer queries. No private email is queried or displayed.
 
 ## conversations/{pairId}/messages/{clientUuid}
 Fields: senderId (must equal authenticated UID), text (non-whitespace, <=4000 chars), createdAt (server timestamp). Only participants can read/create. No updates/deletes in MVP. Stable client UUID supports reconciliation: after ambiguous timeout, read that ID to determine success before retrying; never overwrite an existing message.
