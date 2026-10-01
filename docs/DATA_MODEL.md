@@ -12,6 +12,8 @@ Search normalizes with Locale.ROOT, trims the input, debounces 300 ms, and retur
 
 ## conversations/{pairId}/messages/{clientUuid}
 Fields: senderId (must equal authenticated UID), text (non-whitespace, <=4000 chars), createdAt (server timestamp). Only participants can read/create. No updates/deletes in MVP. Stable client UUID supports reconciliation: after ambiguous timeout, read that ID to determine success before retrying; never overwrite an existing message.
-Recent-history query: orderBy createdAt descending, limit 50; reverse for display. Pagination deferred. Server indexes provide chronological queries; no email/credentials duplicated into messages.
+Recent-history query: orderBy createdAt descending, limit 50; display sorted by server time then ID. Duplicate snapshot IDs collapse to one row. Pending writes use metadata and an estimated time only for provisional ordering; they display Sending rather than a confirmed timestamp. Pagination is deferred. Server indexes provide chronological queries; no email/credentials duplicated into messages.
+
+The message repository reads an outgoing ID from the server before creating it. An existing matching sender/text means a previous attempt succeeded; a mismatched record is a conflict. Concurrent same-ID writes reconcile after immutable-rule denial. Offline preflight failure keeps the draft for retry; a write already queued by the SDK can await acknowledgement and is never labelled sent solely because of a timeout. Advanced durable outbox/reconnect behavior is deferred.
 
 Rules default-deny all other paths. Tests cover anonymous/non-member access, sender spoofing, ownership, timestamp forgery, extra fields, pair constraints and immutable message IDs. Changes to schema require updated rules/tests together. Firestore rules are the authoritative boundary; Android validation improves UX only.

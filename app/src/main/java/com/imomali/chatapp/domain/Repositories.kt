@@ -7,9 +7,9 @@ interface AuthRepository {
     fun signOut()
 }
 interface ProfileRepository { fun getProfile(uid: String, result: (Result<UserProfile?>) -> Unit) }
-// Messaging implementations belong to Wednesday/Thursday; no mock success paths.
+// Subscription contracts are independent of Android views.
 interface ConversationRepository { fun observeConversations(result: (Result<List<Conversation>>) -> Unit): Subscription }
 interface MessageRepository {
-    fun observeRecent(conversationId: String, result: (Result<List<Message>>) -> Unit): Subscription
+    fun observeRecent(conversationId: String, result: (Result<MessageHistory>) -> Unit): Subscription
     fun send(conversationId: String, clientMessageId: String, text: String, result: (Result<Unit>) -> Unit)
 }

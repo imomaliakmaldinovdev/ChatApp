@@ -1,0 +1,19 @@
+<resources>
+    <item name="messageHistory" type="id"/>
+    <item name="messageInput" type="id"/>
+    <item name="sendMessage" type="id"/>
+    <string name="loading_messages">Loading messages</string>
+    <string name="message_hint">Write a message</string>
+    <string name="send_message">Send</string>
+    <string name="message_count">%1$d / %2$d</string>
+    <string name="history_failed">Could not load this conversation. Check your connection and access, then retry.</string>
+    <string name="send_failed">Message not confirmed. Your text is kept here; tap Retry.</string>
+    <string name="send_waiting">Still waiting for confirmation. Retry checks the same message without creating a duplicate.</string>
+    <string name="history_connecting">Connecting… Showing available messages.</string>
+    <string name="empty_messages">No messages yet. Say hello.</string>
+    <string name="recent_history">Showing the latest 50 messages.</string>
+    <string name="message_failed">Not confirmed · Retry</string>
+    <string name="message_waiting">Awaiting confirmation</string>
+    <string name="message_sending">Sending…</string>
+    <string name="time_unavailable">Time unavailable</string>
+</resources>

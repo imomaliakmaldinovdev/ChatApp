@@ -22,8 +22,9 @@ import com.imomali.chatapp.domain.UserProfile
 import java.text.DateFormat
 import java.util.Date
 
-/** Native, width-adaptive discovery surface; messaging controls arrive in Thursday's scope. */
-class DiscoveryView(context: Context, private val model: DiscoveryViewModel) : LinearLayout(context) {
+/** Native discovery surface with a lifecycle-managed conversation panel. */
+class DiscoveryView(context: Context, private val model: DiscoveryViewModel, chatModel: ChatViewModel) : LinearLayout(context) {
+    val chatView = ChatView(context, chatModel) { model.state.value?.participant?.uid?.let { model.showProfile(it) } }
     private val controls = LinearLayout(context)
     private val back = button(R.string.back) { hideKeyboard(); model.back() }
     private val newChat = button(R.string.new_chat) { model.showSearch() }
@@ -63,6 +64,7 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel) : L
         addView(status); addView(retry)
         addView(detailsScroll, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
         addView(list, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
+        addView(chatView, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
         searchInput.doAfterTextChanged { if (!rendering) model.search(it.toString()) }
     }
     fun render(state: DiscoveryState) {
@@ -99,7 +101,8 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel) : L
         retry.visibility = if (error != null && !state.starting) VISIBLE else GONE
         details.removeAllViews()
         list.visibility = if (state.screen == DiscoveryScreen.CHATS || searching) VISIBLE else GONE
-        detailsScroll.visibility = if (list.visibility == GONE) VISIBLE else GONE
+        detailsScroll.visibility = if (state.screen == DiscoveryScreen.PROFILE) VISIBLE else GONE
+        chatView.visibility = if (state.screen == DiscoveryScreen.CONVERSATION) VISIBLE else GONE
         when (state.screen) {
             DiscoveryScreen.CHATS -> adapter.show(state.chats.map { chat ->
                 Row(chat.participant?.displayName.orEmpty(), chat.lastMessage?.text ?: context.getString(R.string.no_messages),
@@ -113,13 +116,7 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel) : L
                 profileDetails(state.profile)
             }
             DiscoveryScreen.CONVERSATION -> {
-                val user = state.participant
-                details.addView(label(24f).apply { text = user?.displayName?.ifBlank { null } ?: context.getString(R.string.unknown_user) })
-                details.addView(label().apply {
-                    text = state.chats.firstOrNull { it.conversation.id == state.conversationId }?.lastMessage?.text
-                        ?: context.getString(R.string.conversation_ready)
-                })
-                if (user != null) details.addView(button(R.string.view_profile) { model.showProfile(user.uid) })
+                chatView.participant(state.participant)
             }
         }
         rendering = false

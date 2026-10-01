@@ -1,5 +1,5 @@
 # Chat App
-Native Android private messaging MVP. Foundation, authentication, live chats discovery, public profiles, user search and reusable private conversations are implemented. Message composition and history remain Thursday's milestone. See docs/WEDNESDAY_STATUS.md for verification and pending cloud setup.
+Native Android private messaging MVP. Foundation, authentication, discovery, public profiles, user search, private conversations and text messaging are implemented. Conversations include a multiline composer, live incoming/outgoing messages, safe retry, local timestamps and the latest 50 persisted messages. See docs/THURSDAY_STATUS.md for verification and pending teacher/cloud review.
 
 ## Open and build
 Open this directory in Android Studio. Use its bundled JDK 21 (or newer supported JDK), SDK 36, and Gradle wrapper 9.4.1. Android Gradle Plugin 9.2.1 provides built-in Kotlin. Min SDK 24; target SDK 36.
@@ -22,6 +22,7 @@ When received, put the teacher’s google-services.json in app/ and sync Gradle.
 - docs/MONDAY_STATUS.md — actual verification and outstanding work
 - docs/TUESDAY_STATUS.md — authentication implementation and verification
 - docs/WEDNESDAY_STATUS.md — discovery flows and review status
+- docs/THURSDAY_STATUS.md — messaging flows, verification and remaining release work
 
 Trello: https://trello.com/b/CXiHwZj7/chat-app
 Plan: https://trello.com/c/34sHAx3P

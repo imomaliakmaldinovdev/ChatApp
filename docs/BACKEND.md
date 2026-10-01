@@ -27,5 +27,5 @@ The JSON connects the client to a project; it does NOT enable authentication, cr
 5. Create two test users and verify real auth, participant read/write, non-member denial and server persistence. Record the result before calling cloud setup complete.
 6. Use a separate Firebase project for production. Do not put production data into development tests. Configure release credentials deliberately and rerun release/access checks.
 
-The current application implements registration/login forms and session handling. Message repository implementation remains a future milestone. SDK initialization alone is not a connectivity check.
+The current application implements authentication, discovery and private text messaging. MessagingFlowTest verifies two-user live delivery, idempotent retry, retained drafts after offline failure, bounded server history, new-session persistence and the keyboard/composer flow. MessagingSessionTest covers stale callbacks, timeout/retry states, lifecycle cleanup and timezone/date formatting. All local tests use demo-chat-app; passing them does not claim the teacher's cloud project is configured. SDK initialization alone is not a connectivity check.
 Official references: https://firebase.google.com/docs/android/setup and https://firebase.google.com/docs/rules/unit-tests

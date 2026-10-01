@@ -16,18 +16,23 @@ class MainActivity : AppCompatActivity() {
     private lateinit var model: AuthViewModel
     private lateinit var discovery: DiscoveryViewModel
     private lateinit var discoveryView: DiscoveryView
+    private lateinit var chat: ChatViewModel
+    private var active = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         model = ViewModelProvider(this)[AuthViewModel::class.java]
         discovery = ViewModelProvider(this)[DiscoveryViewModel::class.java]
-        discoveryView = DiscoveryView(this, discovery)
+        chat = ViewModelProvider(this)[ChatViewModel::class.java]
+        discoveryView = DiscoveryView(this, discovery, chat)
         binding.discoveryContainer.addView(discoveryView)
         discovery.state.observe(this) { state ->
             discoveryView.render(state)
             if (model.state.value?.uid != null) renderDiscoveryTitle(state)
+            syncChat()
         }
+        chat.state.observe(this) { discoveryView.chatView.render(it) }
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (model.state.value?.uid != null && discovery.back()) return
@@ -51,7 +56,7 @@ class MainActivity : AppCompatActivity() {
             FirebaseBackend.State.EMULATOR -> R.string.backend_emulator
             FirebaseBackend.State.INVALID -> R.string.backend_invalid
         })
-        binding.signOut.setOnClickListener { discovery.bind(null); clearInputs(); model.signOut() }
+        binding.signOut.setOnClickListener { chat.clear(); discovery.bind(null); clearInputs(); model.signOut() }
         binding.switchMode.setOnClickListener {
             model.registering = !model.registering
             clearInputs()
@@ -60,8 +65,16 @@ class MainActivity : AppCompatActivity() {
         binding.submit.setOnClickListener { submit() }
         model.state.observe(this, ::render)
     }
-    override fun onStart() { super.onStart(); model.verifySession() }
-    override fun onStop() { discovery.pause(); super.onStop() }
+    override fun onStart() { active = true; super.onStart(); model.verifySession() }
+    override fun onStop() { active = false; chat.pause(); discovery.pause(); super.onStop() }
+    private fun syncChat() {
+        if (!active) { chat.pause(); return }
+        val auth = model.state.value ?: return
+        val route = discovery.state.value ?: return
+        if (auth.uid != null && route.screen == DiscoveryScreen.CONVERSATION && route.conversationId != null) {
+            chat.open(auth.uid, route.conversationId)
+        } else if (!auth.busy && auth.uid == null) chat.clear() else chat.pause()
+    }
     private fun renderDiscoveryTitle(state: DiscoveryState) {
         binding.title.text = when (state.screen) {
             DiscoveryScreen.CHATS -> getString(R.string.chats)
@@ -117,5 +130,6 @@ class MainActivity : AppCompatActivity() {
         binding.error.visibility = if (state.error == null) View.GONE else View.VISIBLE
         listOf(binding.submit, binding.switchMode, binding.name, binding.email, binding.password, binding.confirm).forEach { it.isEnabled = !state.busy }
         if (signedIn) { clearInputs(); renderDiscoveryTitle(discovery.state.value!!) }
+        syncChat()
     }
 }
