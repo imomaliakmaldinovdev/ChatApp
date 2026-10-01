@@ -1,14 +1,14 @@
 # Firebase setup
 ## Local isolation (no cloud account needed)
-Requires Node 22+, pnpm and Java 21+. From the project root:
+Requires Java 21+, an Android emulator/device and the Firebase CLI. The security tests are Kotlin Android instrumentation tests in app/src/androidTest/java/com/imomali/chatapp/FirestoreRulesTest.kt. Install the Firebase CLI separately; its standalone binary does not require a project Node.js or pnpm setup. See https://firebase.google.com/docs/cli for official installation options. From the project root, with an Android emulator running:
 ```sh
-pnpm install --frozen-lockfile
-pnpm test:rules
-pnpm emulators
+firebase emulators:exec --project demo-chat-app --only auth,firestore './gradlew -PuseFirebaseEmulators=true connectedDebugAndroidTest'
 ```
-Rules tests start/stop a Firestore emulator automatically and use only project demo-chat-app. Emulators bind localhost. Do not point the tests at a real Firebase project; they clear test data. Android emulator accesses host services at 10.0.2.2.
+This command starts/stops Auth and Firestore emulators, loads firestore.rules from firebase.json, and runs all device tests. The nine rules tests use the Android Firebase SDK with isolated named clients and new test users per test. Every read explicitly requests the server; denied operations must return PERMISSION_DENIED, so connectivity errors cannot count as passes. Tests never clear shared data or bypass rules. They use only hard-coded project demo-chat-app and skip outside debug emulator mode. Emulators bind localhost; Android emulators access host services at 10.0.2.2. No cloud account or credentials are needed.
 
-Copy firebase.properties.example to firebase.properties and set useEmulators=true. Launch emulators before running the Android app. Auth port 9099, Firestore 8080. Local fake client configuration is used automatically. You can also run ./gradlew -PuseFirebaseEmulators=true connectedDebugAndroidTest to test emulator connectivity without editing firebase.properties. Keep pnpm emulators running for this command. The instrumentation suite wakes the test emulator temporarily, releases its wake lock afterward, and skips tests that do not apply to the current backend mode. No service-account credentials needed. If using a physical device, create a deliberate local development connection; do not expose emulator ports publicly.
+For interactive development, run firebase emulators:start --project demo-chat-app --only auth,firestore. Copy firebase.properties.example to firebase.properties and set useEmulators=true, or pass -PuseFirebaseEmulators=true to Gradle. Auth port 9099, Firestore 8080. Local fake client configuration is used automatically. You can run ./gradlew -PuseFirebaseEmulators=true connectedDebugAndroidTest with those emulators running. The UI instrumentation suite wakes the Android emulator temporarily and releases its wake lock afterward. If using a physical device, create a deliberate local development connection; do not expose emulator ports publicly.
+
+To run only the security rules suite, add -Pandroid.testInstrumentationRunnerArguments.class=com.imomali.chatapp.FirestoreRulesTest to the Gradle command. To verify the normal build, run ./gradlew assembleDebug testDebugUnitTest lintDebug without the emulator property; emulator-only device tests are deliberately skipped in that mode.
 
 ## Teacher-provided google-services.json (preferred)
 When the teacher sends the Firebase Android config, place it at app/google-services.json and sync Gradle. The official Google Services plugin is enabled only when a config file exists, so the project builds while waiting for the file. The file is ignored by Git.
@@ -27,5 +27,5 @@ The JSON connects the client to a project; it does NOT enable authentication, cr
 5. Create two test users and verify real auth, participant read/write, non-member denial and server persistence. Record the result before calling cloud setup complete.
 6. Use a separate Firebase project for production. Do not put production data into development tests. Configure release credentials deliberately and rerun release/access checks.
 
-The current application initializes Firebase when configured and observes its session. Registration/login forms and message repository implementation are future milestones. SDK initialization alone is not a connectivity check.
+The current application implements authentication, discovery and private text messaging. MessagingFlowTest verifies two-user live delivery, idempotent retry, retained drafts after offline failure, bounded server history, new-session persistence and the keyboard/composer flow. MessagingSessionTest covers stale callbacks, timeout/retry states, lifecycle cleanup and timezone/date formatting. All local tests use demo-chat-app; passing them does not claim the teacher's cloud project is configured. SDK initialization alone is not a connectivity check.
 Official references: https://firebase.google.com/docs/android/setup and https://firebase.google.com/docs/rules/unit-tests

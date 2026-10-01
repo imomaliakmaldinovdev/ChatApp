@@ -132,5 +132,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         backend.auth?.signOut()
         state.value = AuthState()
     }
-    override fun onCleared() { backend.auth?.removeAuthStateListener(listener) }
+    override fun onCleared() {
+        ++generation
+        backend.auth?.removeAuthStateListener(listener)
+    }
 }

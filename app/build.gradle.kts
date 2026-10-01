@@ -39,6 +39,7 @@ android {
     lint { abortOnError = true }
 }
 dependencies {
+    implementation("androidx.recyclerview:recyclerview:1.4.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.9.1")
     implementation("androidx.lifecycle:lifecycle-livedata:2.9.1")
     implementation("androidx.core:core-ktx:1.16.0")

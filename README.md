@@ -1,5 +1,5 @@
 # Chat App
-Native Android private messaging MVP. Monday foundation and Tuesday login/registration are implemented. Email/password authentication, session checks, logout, and profile recovery use Firebase. Messaging remains a later milestone.
+Native Android private messaging MVP. Foundation, authentication, discovery, public profiles, user search, private conversations and text messaging are implemented. Conversations include a multiline composer, live incoming/outgoing messages, safe retry, local timestamps and the latest 50 persisted messages. See docs/THURSDAY_STATUS.md for verification and pending teacher/cloud review.
 
 ## Open and build
 Open this directory in Android Studio. Use its bundled JDK 21 (or newer supported JDK), SDK 36, and Gradle wrapper 9.4.1. Android Gradle Plugin 9.2.1 provides built-in Kotlin. Min SDK 24; target SDK 36.
@@ -21,8 +21,10 @@ When received, put the teacher’s google-services.json in app/ and sync Gradle.
 - CONTRIBUTING.md — GitFlow and verification
 - docs/MONDAY_STATUS.md — actual verification and outstanding work
 - docs/TUESDAY_STATUS.md — authentication implementation and verification
+- docs/WEDNESDAY_STATUS.md — discovery flows and review status
+- docs/THURSDAY_STATUS.md — messaging flows, verification and remaining release work
 
 Trello: https://trello.com/b/CXiHwZj7/chat-app
 Plan: https://trello.com/c/34sHAx3P
 
-GitHub: https://github.com/imomaliakmaldinovdev/ChatApp (private). The default branch, develop, contains current development work. master remains the stable baseline; feature branches start from develop and merge back after testing.
+GitHub: https://github.com/imomaliakmaldinovdev/ChatApp (public). The default branch, develop, contains current development work. master remains the stable baseline. Feature branches start from develop; pull requests require teacher review before merging. See CONTRIBUTING.md for approval and auto-merge steps.
