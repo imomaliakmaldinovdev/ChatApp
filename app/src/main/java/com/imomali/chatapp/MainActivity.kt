@@ -18,6 +18,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var discoveryView: DiscoveryView
     private lateinit var chat: ChatViewModel
     private var active = false
+    private var keyboardVisible = false
+    private fun renderChrome() {
+        val signedIn = model.state.value?.uid != null
+        val compact = resources.configuration.screenHeightDp < 480 || keyboardVisible
+        binding.brand.visibility = if (signedIn || compact) View.GONE else View.VISIBLE
+        binding.title.visibility = if (signedIn && compact) View.GONE else View.VISIBLE
+        binding.subtitle.visibility = if (signedIn || compact) View.GONE else View.VISIBLE
+        binding.backendStatus.visibility = if (BuildConfig.DEBUG && !signedIn && !compact) View.VISIBLE else View.GONE
+        binding.signOut.visibility = if ((signedIn || model.needsProfile) && !keyboardVisible) View.VISIBLE else View.GONE
+        discoveryView.compactComposer(signedIn && keyboardVisible && resources.configuration.screenHeightDp < 480)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -42,10 +53,12 @@ class MainActivity : AppCompatActivity() {
             }
         })
         if (savedInstanceState != null) model.registering = savedInstanceState.getBoolean("registering")
-        val padding = (24 * resources.displayMetrics.density).toInt()
+        val padding = (12 * resources.displayMetrics.density).toInt()
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
             view.setPadding(padding + bars.left, padding + bars.top, padding + bars.right, padding + bars.bottom)
+            keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            renderChrome()
             insets
         }
         val backend = (application as ChatApplication).backend
@@ -130,6 +143,7 @@ class MainActivity : AppCompatActivity() {
         binding.error.visibility = if (state.error == null) View.GONE else View.VISIBLE
         listOf(binding.submit, binding.switchMode, binding.name, binding.email, binding.password, binding.confirm).forEach { it.isEnabled = !state.busy }
         if (signedIn) { clearInputs(); renderDiscoveryTitle(discovery.state.value!!) }
+        renderChrome()
         syncChat()
     }
 }

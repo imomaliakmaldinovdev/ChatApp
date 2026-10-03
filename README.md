@@ -1,5 +1,5 @@
 # Chat App
-Native Android private messaging MVP. Foundation, authentication, discovery, public profiles, user search, private conversations and text messaging are implemented. Conversations include a multiline composer, live incoming/outgoing messages, safe retry, local timestamps and the latest 50 persisted messages. See docs/THURSDAY_STATUS.md for verification and pending teacher/cloud review.
+Native Android private messaging MVP. Foundation, authentication, discovery, public profiles, user search, private conversations and text messaging are implemented. Conversations include a multiline composer, live incoming/outgoing messages, safe retry, local timestamps and the latest 50 persisted messages. Friday adds bounded profile/conversation write waits, retry recovery and keyboard/accessibility improvements. See docs/FRIDAY_STATUS.md for verification and pending teacher/cloud review.
 
 ## Open and build
 Open this directory in Android Studio. Use its bundled JDK 21 (or newer supported JDK), SDK 36, and Gradle wrapper 9.4.1. Android Gradle Plugin 9.2.1 provides built-in Kotlin. Min SDK 24; target SDK 36.
@@ -23,8 +23,10 @@ When received, put the teacher’s google-services.json in app/ and sync Gradle.
 - docs/TUESDAY_STATUS.md — authentication implementation and verification
 - docs/WEDNESDAY_STATUS.md — discovery flows and review status
 - docs/THURSDAY_STATUS.md — messaging flows, verification and remaining release work
+- docs/FRIDAY_STATUS.md — quality checks, artifacts and release blockers
+- docs/RELEASE_CHECKLIST.md — repeatable two-user checks and release gate
 
 Trello: https://trello.com/b/CXiHwZj7/chat-app
 Plan: https://trello.com/c/34sHAx3P
 
-GitHub: https://github.com/imomaliakmaldinovdev/ChatApp (public). The default branch, develop, contains current development work. master remains the stable baseline. Feature branches start from develop; pull requests require teacher review before merging. See CONTRIBUTING.md for approval and auto-merge steps.
+GitHub: https://github.com/imomaliakmaldinovdev/ChatApp (public). The default integration branch is develop; unapproved work remains on feature branches. master remains the stable baseline. Feature branches normally start from develop; dependent work may stack on a pending feature branch, with that dependency recorded in its PR. Pull requests require teacher review before merging. See CONTRIBUTING.md for approval and auto-merge steps.

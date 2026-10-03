@@ -42,15 +42,16 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
     private val input = object : TextInputEditText(context) {
         override fun onCreateInputConnection(outAttrs: EditorInfo): android.view.inputmethod.InputConnection? {
             val connection = super.onCreateInputConnection(outAttrs)
-            outAttrs.imeOptions = (outAttrs.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION.inv() and EditorInfo.IME_MASK_ACTION.inv()) or EditorInfo.IME_ACTION_SEND
+            outAttrs.imeOptions = (outAttrs.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION.inv() and EditorInfo.IME_MASK_ACTION.inv()) or EditorInfo.IME_ACTION_SEND or EditorInfo.IME_FLAG_NO_EXTRACT_UI
             return connection
         }
     }.apply {
         id = R.id.messageInput; hint = context.getString(R.string.message_hint)
         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-        imeOptions = EditorInfo.IME_ACTION_SEND
+        imeOptions = EditorInfo.IME_ACTION_SEND or EditorInfo.IME_FLAG_NO_EXTRACT_UI
         minLines = 1; maxLines = 4; minHeight = dp(48); isSaveEnabled = false
         filters = arrayOf(InputFilter.LengthFilter(MessagePolicy.MAX_LENGTH))
+        contentDescription = context.getString(R.string.message_hint)
         setPadding(dp(12), dp(8), dp(12), dp(8))
     }
     private val send = MaterialButton(context).apply {
@@ -60,18 +61,27 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
     private val count = label(12f)
     private var rendering = false
     private var conversation: String? = null
+    private val participantHeader = LinearLayout(context).apply {
+        gravity = Gravity.CENTER_VERTICAL
+        addView(name, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+        addView(profileButton)
+    }
+    fun compactComposer(compact: Boolean) {
+        participantHeader.visibility = if (compact) GONE else VISIBLE
+        count.visibility = if (compact) GONE else VISIBLE
+        input.maxLines = if (compact) 1 else 4
+        status.maxLines = if (compact) 1 else Int.MAX_VALUE
+        status.ellipsize = if (compact) TextUtils.TruncateAt.END else null
+    }
     init {
         orientation = VERTICAL
-        addView(LinearLayout(context).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            addView(name, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
-            addView(profileButton)
-        })
+        addView(participantHeader)
         addView(progress, LayoutParams(dp(24), dp(24)).apply { gravity = Gravity.CENTER_HORIZONTAL })
         addView(status); addView(retryHistory)
         addView(history, LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
         addView(LinearLayout(context).apply {
             gravity = Gravity.BOTTOM
+            isBaselineAligned = false
             addView(input, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
             addView(send)
         })
@@ -174,6 +184,11 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
             timestamp.text = statusText
             timestamp.contentDescription = if (row.message.pending || row.status != null) statusText
                 else MessageTime.format(row.message.createdAtMillis, full = true) ?: statusText
+            itemView.contentDescription = context.getString(if (row.mine) R.string.outgoing_message else R.string.incoming_message,
+                row.message.text, timestamp.contentDescription)
+            itemView.isFocusable = true
+            body.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            timestamp.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
         }
     }
 }

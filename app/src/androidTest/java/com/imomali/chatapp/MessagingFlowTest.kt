@@ -178,6 +178,7 @@ class MessagingFlowTest {
                 input.onCreateInputConnection(editor)
                 assertEquals(EditorInfo.IME_ACTION_SEND, editor.imeOptions and EditorInfo.IME_MASK_ACTION)
                 assertEquals(0, editor.imeOptions and EditorInfo.IME_FLAG_NO_ENTER_ACTION)
+                assertTrue(editor.imeOptions and EditorInfo.IME_FLAG_NO_EXTRACT_UI != 0)
                 input.setText("  \n "); assertFalse(button.isEnabled)
                 input.setText("x".repeat(4001)); assertEquals(4000, input.text.length)
                 input.setText("Hello Bob\nSent from Android")
@@ -208,6 +209,7 @@ class MessagingFlowTest {
                 height > 100 && bounds.bottom <= composer.rootView.height - height
             }
             InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            InstrumentationRegistry.getInstrumentation().uiAutomation.waitForIdle(500, 5000)
             // Artifact for manual layout review while the test is running.
             val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
             java.io.File(app.getExternalFilesDir(null), "thursday-chat.png").outputStream().use {
@@ -219,7 +221,12 @@ class MessagingFlowTest {
                 val visible = android.graphics.Rect()
                 activity.window.decorView.getWindowVisibleDisplayFrame(visible)
                 val sendBounds = android.graphics.Rect()
-                assertTrue(activity.findViewById<View>(R.id.sendMessage).getGlobalVisibleRect(sendBounds))
+                val sendButton = activity.findViewById<View>(R.id.sendMessage)
+                assertTrue(sendButton.getGlobalVisibleRect(sendBounds))
+                assertEquals("Send button must not be clipped", sendButton.height, sendBounds.height())
+                val composerBounds = android.graphics.Rect()
+                assertTrue(composer.getGlobalVisibleRect(composerBounds))
+                assertEquals("Composer must not be clipped", composer.height, composerBounds.height())
                 assertTrue("Composer must remain above the keyboard", sendBounds.bottom <= visible.bottom)
                 activity.findViewById<View>(R.id.signOut).performClick()
             }

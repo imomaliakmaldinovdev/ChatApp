@@ -41,7 +41,7 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
         isHintEnabled = false
         addView(searchInput)
     }
-    private val progress = ProgressBar(context)
+    private val progress = ProgressBar(context).apply { contentDescription = context.getString(R.string.loading_content) }
     private val status = label().apply { accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
     private val retry = button(R.string.retry) { model.retry() }
     private val details = LinearLayout(context).apply { orientation = VERTICAL }
@@ -53,6 +53,12 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
     }
     private var rendering = false
     private var lastScreen: DiscoveryScreen? = null
+    private var compactComposer = false
+    fun compactComposer(compact: Boolean) {
+        compactComposer = compact
+        controls.visibility = if (compact && lastScreen == DiscoveryScreen.CONVERSATION) GONE else VISIBLE
+        chatView.compactComposer(compact)
+    }
 
     init {
         orientation = VERTICAL
@@ -70,6 +76,7 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
     fun render(state: DiscoveryState) {
         rendering = true
         if (state.screen != lastScreen) { hideKeyboard(); lastScreen = state.screen }
+        compactComposer(compactComposer)
         back.visibility = if (state.screen == DiscoveryScreen.CHATS) GONE else VISIBLE
         back.isEnabled = !state.starting
         newChat.visibility = if (state.screen == DiscoveryScreen.CHATS) VISIBLE else GONE
@@ -122,6 +129,10 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
         rendering = false
     }
     private fun profileDetails(profile: UserProfile?) {
+        if (profile == null) {
+            details.addView(label().apply { setText(R.string.profile_unavailable) })
+            return
+        }
         details.addView(label(36f).apply { text = DiscoveryPolicy.initials(profile?.displayName.orEmpty()); gravity = android.view.Gravity.CENTER })
         details.addView(label(24f).apply { text = profile?.displayName?.ifBlank { null } ?: context.getString(R.string.unknown_user) })
         details.addView(label().apply { text = profile?.bio?.ifBlank { null } ?: context.getString(R.string.no_bio) })
@@ -169,6 +180,9 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
             name.text = row.name.ifBlank { context.getString(R.string.unknown_user) }
             avatar.text = DiscoveryPolicy.initials(row.name); preview.text = row.preview
             time.text = if (row.time > 0) DateFormat.getDateInstance(DateFormat.SHORT).format(Date(row.time)) else ""
+            itemView.contentDescription = listOf(name.text, preview.text, time.text).filter { it.isNotEmpty() }.joinToString(". ")
+            (itemView as ViewGroup).descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            listOf(avatar, name, preview, time).forEach { it.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }
             itemView.setOnClickListener { row.select() }
         }
     }

@@ -90,6 +90,7 @@ class DiscoveryFlowTest {
         eve = client("$prefix Eve").second
     }
     @After fun cleanup() {
+        if (BuildConfig.USE_EMULATORS && ::db.isInitialized) Tasks.await(db.enableNetwork(), 15, TimeUnit.SECONDS)
         app.backend.auth?.signOut()
         clients.forEach { firebase ->
             Tasks.await(FirebaseFirestore.getInstance(firebase).terminate(), 15, TimeUnit.SECONDS)
@@ -130,6 +131,24 @@ class DiscoveryFlowTest {
             assertTrue(model.state.value!!.chats.isEmpty())
             Thread.sleep(400)
             assertTrue(model.state.value!!.chats.isEmpty())
+        } finally { main { store.clear() } }
+    }
+    @Test fun offlineConversationTimesOutAndRetryReusesCanonicalId() {
+        val store = androidx.lifecycle.ViewModelStore()
+        lateinit var model: DiscoveryViewModel
+        main { model = ViewModelProvider(store, ViewModelProvider.AndroidViewModelFactory(app))[DiscoveryViewModel::class.java]; model.bind(me); model.showSearch() }
+        try {
+            waitFor(model) { !it.loadingChats }
+            Tasks.await(db.disableNetwork(), 15, TimeUnit.SECONDS)
+            main { model.start(bob); model.start(bob) }
+            waitFor(model) { !it.starting && it.error != null }
+            assertEquals(DiscoveryScreen.SEARCH, model.state.value!!.screen)
+            assertTrue(model.state.value!!.error!!.contains("not confirmed"))
+            Tasks.await(db.enableNetwork(), 15, TimeUnit.SECONDS)
+            main { model.retry() }
+            waitFor(model) { !it.starting && it.screen == DiscoveryScreen.CONVERSATION }
+            assertEquals(DiscoveryPolicy.conversationId(me, bob.uid), model.state.value!!.conversationId)
+            assertEquals(1, Tasks.await(db.collection("conversations").whereArrayContains("memberIds", me).get(Source.SERVER), 15, TimeUnit.SECONDS).size())
         } finally { main { store.clear() } }
     }
     @Test fun screensSearchOpenProfileRestoreAndClearAfterLogout() {

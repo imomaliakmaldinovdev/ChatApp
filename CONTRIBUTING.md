@@ -14,7 +14,7 @@ gh pr merge --auto --merge
 ```
 Run ./gradlew assembleDebug testDebugUnitTest lintDebug. For security/backend changes, run the Kotlin FirestoreRulesTest suite against local Auth and Firestore emulators using the commands in docs/BACKEND.md. No project JavaScript dependencies are required. Validate the app on an emulator/device before a release. Only merge develop into master when release criteria pass; tag actual releases. Never force-push, delete history, or commit local.properties, firebase.properties, tokens or service-account keys.
 
-Repository: https://github.com/imomaliakmaldinovdev/ChatApp (public). develop is the default branch and holds current implementation. master remains the stable charter baseline until an actual release is reviewed.
+Repository: https://github.com/imomaliakmaldinovdev/ChatApp (public). develop is the default integration branch; unapproved changes remain on feature branches. If a task depends on an unmerged feature, stack it on that branch and identify the dependency in its PR. Review the earlier PR first. master remains the stable charter baseline until an actual release is reviewed.
 
 Both develop and master require a pull request, one approving review, code-owner approval and resolved review conversations. Protection applies to administrators too; direct unreviewed pushes, force pushes and branch deletion are blocked. New changes dismiss stale approval, and the latest push must be approved by someone other than its pusher.
 

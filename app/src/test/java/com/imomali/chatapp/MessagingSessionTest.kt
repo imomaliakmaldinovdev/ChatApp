@@ -96,4 +96,20 @@ class MessagingSessionTest {
         assertTrue(previousDay.contains("/"))
         assertTrue(MessageTime.format(earlier, now, Locale.US, east, full = true)!!.contains("2024"))
     }
+    @Test fun historyFailureClearsPrivateRowsAndRetryIgnoresFailedListener() {
+        val f = Fixture(); val s = f.session
+        val message = Message("m", "bob", "hello", 1)
+        f.repository.listeners[0](Result.success(MessageHistory(listOf(message), false)))
+        s.edit("my draft")
+        f.repository.listeners[0](Result.failure(IllegalStateException("internal secret")))
+        assertTrue(s.state.receiveError); assertFalse(s.state.loading)
+        assertTrue(s.state.messages.isEmpty()); assertEquals("my draft", s.state.draft)
+        s.retryHistory()
+        assertTrue(s.state.loading); assertFalse(s.state.receiveError)
+        f.repository.listeners[0](Result.success(MessageHistory(listOf(message), false)))
+        assertTrue(s.state.messages.isEmpty())
+        f.repository.listeners[1](Result.success(MessageHistory(emptyList(), false)))
+        assertFalse(s.state.loading); assertFalse(s.state.receiveError)
+        assertEquals("my draft", s.state.draft)
+    }
 }

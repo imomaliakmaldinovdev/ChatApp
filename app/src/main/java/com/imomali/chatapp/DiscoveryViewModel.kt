@@ -30,6 +30,9 @@ class DiscoveryViewModel(application: Application) : AndroidViewModel(applicatio
     private var profileRequest = 0
     private var subscription: Subscription? = null
     private var searchJob: Runnable? = null
+    private var startJob: Runnable? = null
+    private var startRequest = 0
+    private var retryParticipant: UserProfile? = null
     private var previous = DiscoveryScreen.CHATS
     private fun update(change: (DiscoveryState) -> DiscoveryState) { mutable.value = change(mutable.value!!) }
 
@@ -37,11 +40,12 @@ class DiscoveryViewModel(application: Application) : AndroidViewModel(applicatio
         if (userId == uid) {
             if (userId != null && subscription == null) {
                 listen()
-                if (state.value!!.screen == DiscoveryScreen.SEARCH) search(state.value!!.query)
+                if (state.value!!.screen == DiscoveryScreen.SEARCH && retryParticipant == null) search(state.value!!.query)
             }
             return
         }
         pause(); session++; request++; profileRequest++; uid = userId
+        startRequest++; startJob?.let(handler::removeCallbacks); startJob = null; retryParticipant = null
         mutable.value = DiscoveryState()
         if (userId != null) listen()
     }
@@ -63,13 +67,14 @@ class DiscoveryViewModel(application: Application) : AndroidViewModel(applicatio
     }
     fun retry() {
         when (state.value!!.screen) {
-            DiscoveryScreen.SEARCH -> search(state.value!!.query)
+            DiscoveryScreen.SEARCH -> retryParticipant?.let(::start) ?: search(state.value!!.query)
             DiscoveryScreen.PROFILE -> showProfile(state.value!!.profile?.uid ?: state.value!!.participant?.uid ?: uid ?: return, false)
             else -> { subscription?.close(); subscription = null; listen() }
         }
     }
     fun showSearch() { update { it.copy(screen = DiscoveryScreen.SEARCH, error = null) } }
     fun search(value: String) {
+        retryParticipant = null
         searchJob?.let(handler::removeCallbacks)
         val ticket = ++request
         val identity = session
@@ -105,9 +110,19 @@ class DiscoveryViewModel(application: Application) : AndroidViewModel(applicatio
         val userId = uid ?: return
         if (state.value!!.starting) return
         val ticket = session
+        val attempt = ++startRequest
+        retryParticipant = profile
         update { it.copy(starting = true, error = null) }
+        startJob?.let(handler::removeCallbacks)
+        startJob = Runnable {
+            if (ticket == session && attempt == startRequest) {
+                startRequest++
+                update { it.copy(starting = false, error = "Conversation not confirmed. Retry opens the same conversation; it will not create a duplicate.") }
+            }
+        }.also { handler.postDelayed(it, 15000) }
         repository?.start(userId, profile.uid) { result ->
-            if (ticket != session) return@start
+            if (ticket != session || attempt != startRequest) return@start
+            startJob?.let(handler::removeCallbacks); startJob = null
             result.fold({ id -> update { it.copy(screen = DiscoveryScreen.CONVERSATION, conversationId = id,
                 participant = profile, starting = false, error = null) } },
                 { update { it.copy(starting = false, error = "Could not start this conversation. Check your connection and retry.") } })
@@ -116,9 +131,10 @@ class DiscoveryViewModel(application: Application) : AndroidViewModel(applicatio
     fun back(): Boolean {
         if (state.value!!.starting) return true
         if (state.value!!.screen == DiscoveryScreen.CHATS) return false
+        retryParticipant = null
         profileRequest++
         update { it.copy(screen = if (it.screen == DiscoveryScreen.PROFILE) previous else DiscoveryScreen.CHATS, error = null) }
         return true
     }
-    override fun onCleared() { pause(); session++; super.onCleared() }
+    override fun onCleared() { pause(); session++; startJob?.let(handler::removeCallbacks); super.onCleared() }
 }

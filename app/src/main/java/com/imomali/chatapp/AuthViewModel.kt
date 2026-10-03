@@ -18,6 +18,18 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     var registering = false
     private var operation = false
     private var generation = 0
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var profileTimeout: Runnable? = null
+    private fun cancelProfileTimeout() { profileTimeout?.let(handler::removeCallbacks); profileTimeout = null }
+    private fun watchProfileWrite(ticket: Int) {
+        cancelProfileTimeout()
+        profileTimeout = Runnable {
+            if (generation == ticket) {
+                generation++
+                fail(FirebaseNetworkException("Profile confirmation timed out"))
+            }
+        }.also { handler.postDelayed(it, 15000) }
+    }
     private val listener = FirebaseAuth.AuthStateListener { auth ->
         if (!operation) {
             if (auth.currentUser == null) state.value = AuthState(error = state.value?.error)
@@ -44,6 +56,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             if (!result.isSuccessful) { fail(result.exception); return@addOnCompleteListener }
             val uid = requireNotNull(result.result.user).uid
             if (createProfile) {
+                watchProfileWrite(ticket)
                 val displayName = name.trim()
                 requireNotNull(backend.database).collection("profiles").document(uid)
                     .set(mapOf("displayName" to displayName, "searchName" to displayName.lowercase(Locale.ROOT), "bio" to ""))
@@ -51,6 +64,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         if (ticket != generation) return@addOnCompleteListener
                         if (saved.isSuccessful) finish(uid)
                         else {
+                            cancelProfileTimeout()
                             operation = false
                             auth.signOut()
                             state.value = AuthState(error = "Account created, but profile setup failed. Sign in again and complete your profile.")
@@ -69,6 +83,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         state.value = AuthState(busy = true)
         val ticket = ++generation
         val displayName = name.trim()
+        watchProfileWrite(ticket)
         requireNotNull(backend.database).collection("profiles").document(user.uid)
             .set(mapOf("displayName" to displayName, "searchName" to displayName.lowercase(Locale.ROOT), "bio" to ""))
             .addOnCompleteListener {
@@ -107,12 +122,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun finish(uid: String) {
+        cancelProfileTimeout()
         operation = false
         needsProfile = false
         state.value = AuthState(uid = uid)
     }
 
     private fun fail(error: Exception?) {
+        cancelProfileTimeout()
         operation = false
         needsProfile = false
         backend.auth?.signOut()
@@ -126,6 +143,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun signOut() {
+        cancelProfileTimeout()
         ++generation
         operation = false
         needsProfile = false
@@ -133,6 +151,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         state.value = AuthState()
     }
     override fun onCleared() {
+        cancelProfileTimeout()
         ++generation
         backend.auth?.removeAuthStateListener(listener)
     }
