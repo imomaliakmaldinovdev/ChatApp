@@ -27,7 +27,7 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
     private val name = label(18f).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
     private val profileButton = MaterialButton(context).apply {
         setText(R.string.view_profile); minHeight = dp(48); setOnClickListener { profile() }
-    }
+    }.secondary()
     private val progress = ProgressBar(context).apply { contentDescription = context.getString(R.string.loading_messages) }
     private val status = label(13f).apply { accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
     private val retryHistory = MaterialButton(context).apply {
@@ -53,6 +53,10 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
         filters = arrayOf(InputFilter.LengthFilter(MessagePolicy.MAX_LENGTH))
         contentDescription = context.getString(R.string.message_hint)
         setPadding(dp(12), dp(8), dp(12), dp(8))
+        background = GradientDrawable().apply {
+            cornerRadius = dp(16).toFloat(); setColor(Color.WHITE); setStroke(dp(1), Color.rgb(205, 201, 224))
+        }
+        setTextColor(Color.rgb(36, 36, 61)); setHintTextColor(Color.rgb(100, 97, 119))
     }
     private val send = MaterialButton(context).apply {
         id = R.id.sendMessage; setText(R.string.send_message); minHeight = dp(48)
@@ -82,7 +86,7 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
         addView(LinearLayout(context).apply {
             gravity = Gravity.BOTTOM
             isBaselineAligned = false
-            addView(input, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+            addView(input, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(8) })
             addView(send)
         })
         addView(count)
@@ -173,7 +177,7 @@ class ChatView(context: Context, private val model: ChatViewModel, profile: () -
             body.setTextColor(if (row.mine) Color.WHITE else Color.rgb(36, 36, 61))
             body.background = GradientDrawable().apply {
                 cornerRadius = dp(14).toFloat()
-                setColor(if (row.mine) Color.rgb(91, 77, 190) else Color.rgb(230, 228, 244))
+                setColor(if (row.mine) Color.rgb(81, 67, 188) else Color.rgb(234, 231, 250))
             }
             val statusText = when {
                 row.status == SendStatus.FAILED -> context.getString(R.string.message_failed)

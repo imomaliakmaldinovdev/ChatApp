@@ -25,6 +25,7 @@ When received, put the teacher’s google-services.json in app/ and sync Gradle.
 - docs/THURSDAY_STATUS.md — messaging flows, verification and remaining release work
 - docs/FRIDAY_STATUS.md — quality checks, artifacts and release blockers
 - docs/RELEASE_CHECKLIST.md — repeatable two-user checks and release gate
+- docs/UI_REVIEW.md — visual polish, screen matrix and APK UI readiness
 
 Trello: https://trello.com/b/CXiHwZj7/chat-app
 Plan: https://trello.com/c/34sHAx3P

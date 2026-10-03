@@ -54,9 +54,14 @@ class MainActivity : AppCompatActivity() {
         })
         if (savedInstanceState != null) model.registering = savedInstanceState.getBoolean("registering")
         val padding = (12 * resources.displayMetrics.density).toInt()
+        binding.root.addOnLayoutChangeListener { view, left, _, right, _, oldLeft, _, oldRight, _ ->
+            if (right - left != oldRight - oldLeft) ViewCompat.requestApplyInsets(view)
+        }
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
-            view.setPadding(padding + bars.left, padding + bars.top, padding + bars.right, padding + bars.bottom)
+            val maxContentWidth = (600 * resources.displayMetrics.density).toInt()
+            val side = maxOf(padding, (view.width - bars.left - bars.right - maxContentWidth) / 2)
+            view.setPadding(side + bars.left, padding + bars.top, side + bars.right, padding + bars.bottom)
             keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
             renderChrome()
             insets

@@ -66,6 +66,7 @@ class FridayJourneyTest {
                 discovery = ViewModelProvider(it)[DiscoveryViewModel::class.java]
                 chat = ViewModelProvider(it)[ChatViewModel::class.java]
             }
+            screenshot("ui-login.png")
             fun register(name: String, email: String) {
                 scenario.onActivity { activity ->
                     if (!auth.registering) activity.findViewById<View>(R.id.switchMode).performClick()
@@ -73,8 +74,9 @@ class FridayJourneyTest {
                     activity.findViewById<EditText>(R.id.email).setText(email)
                     activity.findViewById<EditText>(R.id.password).setText(password)
                     activity.findViewById<EditText>(R.id.confirm).setText(password)
-                    activity.findViewById<View>(R.id.submit).performClick()
                 }
+                screenshot("ui-registration.png")
+                scenario.onActivity { it.findViewById<View>(R.id.submit).performClick() }
                 waitFor { auth.state.value?.uid != null && !discovery.state.value!!.loadingChats }
                 assertTrue(discovery.state.value!!.chats.isEmpty())
             }
@@ -94,6 +96,7 @@ class FridayJourneyTest {
                 activity.findViewById<EditText>(R.id.userSearch).setText(bobName)
             }
             waitFor { !discovery.state.value!!.searching && discovery.state.value!!.results.size == 1 }
+            screenshot("ui-search.png")
             scenario.onActivity { activity ->
                 val row = activity.findViewById<RecyclerView>(R.id.discoveryList).findViewHolderForAdapterPosition(0)!!.itemView
                 assertTrue(row.contentDescription.toString().contains(bobName)); row.performClick()
@@ -101,6 +104,11 @@ class FridayJourneyTest {
             waitFor { chat.state.value!!.conversationId != null && !chat.state.value!!.loading && !chat.state.value!!.fromCache }
             conversation = chat.state.value!!.conversationId!!
             assertEquals(DiscoveryPolicy.conversationId(aliceId, bobId), conversation)
+            scenario.onActivity { clickText(it, it.getString(R.string.view_profile)) }
+            waitFor { discovery.state.value!!.screen == DiscoveryScreen.PROFILE && !discovery.state.value!!.loadingProfile }
+            screenshot("ui-profile.png")
+            scenario.onActivity { clickText(it, it.getString(R.string.back)) }
+            waitFor { discovery.state.value!!.screen == DiscoveryScreen.CONVERSATION && !chat.state.value!!.loading }
             scenario.onActivity { activity ->
                 val input = activity.findViewById<EditText>(R.id.messageInput)
                 input.setText("Hello Bob — Friday end-to-end check")
@@ -116,6 +124,7 @@ class FridayJourneyTest {
                 activity.findViewById<View>(R.id.submit).performClick()
             }
             waitFor { auth.state.value?.uid == bobId && discovery.state.value!!.chats.size == 1 && !discovery.state.value!!.loadingChats }
+            screenshot("ui-chats.png")
             scenario.onActivity { it.findViewById<RecyclerView>(R.id.discoveryList).findViewHolderForAdapterPosition(0)!!.itemView.performClick() }
             waitFor { chat.state.value!!.messages.size == 1 && !chat.state.value!!.fromCache }
             scenario.onActivity { activity ->

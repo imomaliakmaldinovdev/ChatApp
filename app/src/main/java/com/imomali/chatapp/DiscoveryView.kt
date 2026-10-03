@@ -26,9 +26,9 @@ import java.util.Date
 class DiscoveryView(context: Context, private val model: DiscoveryViewModel, chatModel: ChatViewModel) : LinearLayout(context) {
     val chatView = ChatView(context, chatModel) { model.state.value?.participant?.uid?.let { model.showProfile(it) } }
     private val controls = LinearLayout(context)
-    private val back = button(R.string.back) { hideKeyboard(); model.back() }
+    private val back = button(R.string.back) { hideKeyboard(); model.back() }.secondary()
     private val newChat = button(R.string.new_chat) { model.showSearch() }
-    private val ownProfile = button(R.string.my_profile) { model.showOwnProfile() }
+    private val ownProfile = button(R.string.my_profile) { model.showOwnProfile() }.secondary()
     private val searchInput = TextInputEditText(context).apply {
         id = R.id.userSearch; isSingleLine = true; maxLines = 1; isSaveEnabled = false
         hint = context.getString(R.string.search_by_name)
@@ -62,7 +62,7 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
 
     init {
         orientation = VERTICAL
-        controls.addView(back, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+        controls.addView(back, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT))
         controls.addView(newChat, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
         controls.addView(ownProfile, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
         addView(controls); addView(searchBox)
@@ -133,9 +133,16 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
             details.addView(label().apply { setText(R.string.profile_unavailable) })
             return
         }
-        details.addView(label(36f).apply { text = DiscoveryPolicy.initials(profile?.displayName.orEmpty()); gravity = android.view.Gravity.CENTER })
-        details.addView(label(24f).apply { text = profile?.displayName?.ifBlank { null } ?: context.getString(R.string.unknown_user) })
-        details.addView(label().apply { text = profile?.bio?.ifBlank { null } ?: context.getString(R.string.no_bio) })
+        details.addView(label(28f).apply {
+            text = DiscoveryPolicy.initials(profile.displayName); gravity = android.view.Gravity.CENTER
+            setTextColor(Color.rgb(81, 67, 188))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(Color.rgb(234, 231, 250))
+            }
+        }, LayoutParams(dp(88), dp(88)).apply { gravity = android.view.Gravity.CENTER_HORIZONTAL; topMargin = dp(24); bottomMargin = dp(16) })
+        details.addView(label(24f).apply { text = profile.displayName.ifBlank { context.getString(R.string.unknown_user) }; gravity = android.view.Gravity.CENTER })
+        details.addView(label().apply { text = profile.bio.ifBlank { context.getString(R.string.no_bio) }; gravity = android.view.Gravity.CENTER })
     }
     private fun hideKeyboard() {
         (context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).hideSoftInputFromWindow(windowToken, 0)
@@ -165,13 +172,18 @@ class DiscoveryView(context: Context, private val model: DiscoveryViewModel, cha
         context.theme.resolveAttribute(android.R.attr.selectableItemBackground, value, true)
         setBackgroundResource(value.resourceId)
     }) {
-        private val avatar = label(22f).apply { gravity = android.view.Gravity.CENTER; setTextColor(Color.rgb(86, 71, 190)) }
+        private val avatar = label(18f).apply {
+            gravity = android.view.Gravity.CENTER; setTextColor(Color.rgb(81, 67, 188))
+            background = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.OVAL; setColor(Color.rgb(234, 231, 250))
+            }
+        }
         private val name = label(18f).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
         private val preview = label(14f).apply { maxLines = 1; ellipsize = TextUtils.TruncateAt.END }
         private val time = label(12f)
         init {
             (itemView as LinearLayout).apply {
-                addView(avatar, LayoutParams(dp(52), LayoutParams.WRAP_CONTENT))
+                addView(avatar, LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(12) })
                 addView(LinearLayout(context).apply { orientation = VERTICAL; addView(name); addView(preview) }, LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
                 addView(time)
             }

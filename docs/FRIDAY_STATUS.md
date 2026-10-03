@@ -46,3 +46,5 @@ No production release/tag or merge to master was made. The unsigned release APK 
 - Owner-controlled release signing and final approval are required before a stable release.
 
 Friday cards remain TEST for review; the final release card explicitly remains blocked. Deferred original full-scope requirements remain follow-up work: unread/read state, presence, profile editing, settings, advanced reconnect/outbox, older-history pagination, comprehensive CI/device coverage and detailed design matching.
+
+The subsequent UI pass on 3 October adds consistent styling, quieter navigation, avatars and a centered tablet column. See UI_REVIEW.md for its separate screenshot and targeted regression results; release blockers above still apply.
