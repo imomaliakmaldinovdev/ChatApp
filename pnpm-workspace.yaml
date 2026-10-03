@@ -1,5 +1,0 @@
-# Explicitly skip optional dependency install scripts for this test-only toolchain.
-allowBuilds:
-  '@firebase/util': false
-  protobufjs: false
-  re2: false

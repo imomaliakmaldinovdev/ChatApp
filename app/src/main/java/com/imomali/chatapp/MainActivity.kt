@@ -3,6 +3,7 @@ package com.imomali.chatapp
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
@@ -13,16 +14,56 @@ import com.imomali.chatapp.domain.AuthValidation
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var model: AuthViewModel
+    private lateinit var discovery: DiscoveryViewModel
+    private lateinit var discoveryView: DiscoveryView
+    private lateinit var chat: ChatViewModel
+    private var active = false
+    private var keyboardVisible = false
+    private fun renderChrome() {
+        val signedIn = model.state.value?.uid != null
+        val compact = resources.configuration.screenHeightDp < 480 || keyboardVisible
+        binding.brand.visibility = if (signedIn || compact) View.GONE else View.VISIBLE
+        binding.title.visibility = if (signedIn && compact) View.GONE else View.VISIBLE
+        binding.subtitle.visibility = if (signedIn || compact) View.GONE else View.VISIBLE
+        binding.backendStatus.visibility = if (BuildConfig.DEBUG && !signedIn && !compact) View.VISIBLE else View.GONE
+        binding.signOut.visibility = if ((signedIn || model.needsProfile) && !keyboardVisible) View.VISIBLE else View.GONE
+        discoveryView.compactComposer(signedIn && keyboardVisible && resources.configuration.screenHeightDp < 480)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         model = ViewModelProvider(this)[AuthViewModel::class.java]
+        discovery = ViewModelProvider(this)[DiscoveryViewModel::class.java]
+        chat = ViewModelProvider(this)[ChatViewModel::class.java]
+        discoveryView = DiscoveryView(this, discovery, chat)
+        binding.discoveryContainer.addView(discoveryView)
+        discovery.state.observe(this) { state ->
+            discoveryView.render(state)
+            if (model.state.value?.uid != null) renderDiscoveryTitle(state)
+            syncChat()
+        }
+        chat.state.observe(this) { discoveryView.chatView.render(it) }
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (model.state.value?.uid != null && discovery.back()) return
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        })
         if (savedInstanceState != null) model.registering = savedInstanceState.getBoolean("registering")
-        val padding = (24 * resources.displayMetrics.density).toInt()
+        val padding = (12 * resources.displayMetrics.density).toInt()
+        binding.root.addOnLayoutChangeListener { view, left, _, right, _, oldLeft, _, oldRight, _ ->
+            if (right - left != oldRight - oldLeft) ViewCompat.requestApplyInsets(view)
+        }
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime())
-            view.setPadding(padding + bars.left, padding + bars.top, padding + bars.right, padding + bars.bottom)
+            val maxContentWidth = (600 * resources.displayMetrics.density).toInt()
+            val side = maxOf(padding, (view.width - bars.left - bars.right - maxContentWidth) / 2)
+            view.setPadding(side + bars.left, padding + bars.top, side + bars.right, padding + bars.bottom)
+            keyboardVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            renderChrome()
             insets
         }
         val backend = (application as ChatApplication).backend
@@ -33,7 +74,7 @@ class MainActivity : AppCompatActivity() {
             FirebaseBackend.State.EMULATOR -> R.string.backend_emulator
             FirebaseBackend.State.INVALID -> R.string.backend_invalid
         })
-        binding.signOut.setOnClickListener { clearInputs(); model.signOut() }
+        binding.signOut.setOnClickListener { chat.clear(); discovery.bind(null); clearInputs(); model.signOut() }
         binding.switchMode.setOnClickListener {
             model.registering = !model.registering
             clearInputs()
@@ -42,7 +83,24 @@ class MainActivity : AppCompatActivity() {
         binding.submit.setOnClickListener { submit() }
         model.state.observe(this, ::render)
     }
-    override fun onStart() { super.onStart(); model.verifySession() }
+    override fun onStart() { active = true; super.onStart(); model.verifySession() }
+    override fun onStop() { active = false; chat.pause(); discovery.pause(); super.onStop() }
+    private fun syncChat() {
+        if (!active) { chat.pause(); return }
+        val auth = model.state.value ?: return
+        val route = discovery.state.value ?: return
+        if (auth.uid != null && route.screen == DiscoveryScreen.CONVERSATION && route.conversationId != null) {
+            chat.open(auth.uid, route.conversationId)
+        } else if (!auth.busy && auth.uid == null) chat.clear() else chat.pause()
+    }
+    private fun renderDiscoveryTitle(state: DiscoveryState) {
+        binding.title.text = when (state.screen) {
+            DiscoveryScreen.CHATS -> getString(R.string.chats)
+            DiscoveryScreen.SEARCH -> getString(R.string.new_chat)
+            DiscoveryScreen.PROFILE -> "Profile"
+            DiscoveryScreen.CONVERSATION -> "Conversation"
+        }
+    }
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putBoolean("registering", model.registering)
         super.onSaveInstanceState(outState)
@@ -68,8 +126,13 @@ class MainActivity : AppCompatActivity() {
     private fun render(state: AuthState) {
         val signedIn = state.uid != null
         val repair = model.needsProfile
+        binding.authContent.visibility = if (signedIn) View.GONE else View.VISIBLE
+        binding.discoveryContainer.visibility = if (signedIn) View.VISIBLE else View.GONE
+        // Session revalidation temporarily hides the surface without losing its route.
+        if (signedIn) discovery.bind(state.uid) else if (!state.busy) discovery.bind(null)
         binding.title.text = when { signedIn -> getString(R.string.chats); repair -> "Complete your profile"; model.registering -> "Create account"; else -> getString(R.string.welcome) }
         binding.subtitle.text = when { signedIn -> getString(R.string.empty_chats); repair -> "Choose the name people will see."; model.registering -> "Start your next conversation."; else -> "Welcome back. Sign in to stay connected." }
+        binding.subtitle.visibility = if (signedIn) View.GONE else View.VISIBLE
         binding.form.visibility = if (signedIn) View.GONE else View.VISIBLE
         binding.nameLayout.visibility = if (model.registering || repair) View.VISIBLE else View.GONE
         binding.emailLayout.visibility = if (repair) View.GONE else View.VISIBLE
@@ -84,6 +147,8 @@ class MainActivity : AppCompatActivity() {
         binding.error.text = state.error
         binding.error.visibility = if (state.error == null) View.GONE else View.VISIBLE
         listOf(binding.submit, binding.switchMode, binding.name, binding.email, binding.password, binding.confirm).forEach { it.isEnabled = !state.busy }
-        if (signedIn) clearInputs()
+        if (signedIn) { clearInputs(); renderDiscoveryTitle(discovery.state.value!!) }
+        renderChrome()
+        syncChat()
     }
 }

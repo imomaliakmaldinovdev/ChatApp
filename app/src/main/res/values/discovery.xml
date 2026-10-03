@@ -1,0 +1,21 @@
+<resources>
+    <string name="loading_content">Loading content</string>
+    <string name="profile_unavailable">This profile is no longer available.</string>
+    <item name="userSearch" type="id"/>
+    <item name="discoveryList" type="id"/>
+    <string name="back">Back</string>
+    <string name="new_chat">New chat</string>
+    <string name="my_profile">My profile</string>
+    <string name="search_by_name">Search by name</string>
+    <string name="retry">Retry</string>
+    <string name="no_chats">No conversations yet. Tap New chat to find someone.</string>
+    <string name="opening_chat">Opening conversation…</string>
+    <string name="search_hint">Enter a name to find people.</string>
+    <string name="no_users">No users found. Try another name.</string>
+    <string name="refine_search">Showing the first 20 matches. Type more to narrow your search.</string>
+    <string name="no_messages">No messages yet</string>
+    <string name="tap_to_chat">Tap to start a conversation</string>
+    <string name="unknown_user">Unknown user</string>
+    <string name="no_bio">No bio yet.</string>
+    <string name="view_profile">View profile</string>
+</resources>

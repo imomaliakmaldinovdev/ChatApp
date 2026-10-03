@@ -106,6 +106,37 @@ class AuthFlowTest {
         }
         assertNull(app.backend.auth?.currentUser)
     }
+    @Test fun offlineProfileRepairTimesOutAndCanResumeAfterSignIn() {
+        assumeTrue(BuildConfig.USE_EMULATORS)
+        val auth = app.backend.auth!!
+        val db = app.backend.database!!
+        auth.signOut()
+        val email = "repair-${java.util.UUID.randomUUID()}@example.test"
+        val uid = Tasks.await(auth.createUserWithEmailAndPassword(email, "Test-only-123!"), 15, TimeUnit.SECONDS).user!!.uid
+        val store = androidx.lifecycle.ViewModelStore()
+        lateinit var model: AuthViewModel
+        main { model = ViewModelProvider(store, ViewModelProvider.AndroidViewModelFactory(app))[AuthViewModel::class.java] }
+        try {
+            waitFor(model) { !it.busy && model.needsProfile }
+            Tasks.await(db.disableNetwork(), 15, TimeUnit.SECONDS)
+            main { model.completeProfile("Recovered Friday") }
+            waitFor(model) { !it.busy && it.error != null && !model.needsProfile }
+            assertNull(model.state.value!!.uid)
+            assertNull(auth.currentUser)
+            assertFalse(model.state.value!!.error!!.contains("Profile confirmation"))
+            Tasks.await(db.enableNetwork(), 15, TimeUnit.SECONDS)
+            main { model.submit("", email, "Test-only-123!") }
+            waitFor(model) { !it.busy && (it.uid == uid || model.needsProfile) }
+            if (model.needsProfile) {
+                main { model.completeProfile("Recovered Friday") }
+                waitFor(model) { !it.busy && it.uid == uid }
+            }
+            assertEquals(uid, model.state.value!!.uid)
+        } finally {
+            Tasks.await(db.enableNetwork(), 15, TimeUnit.SECONDS)
+            main { model.signOut(); store.clear() }
+        }
+    }
 
     @Test fun formsValidateAndNeverSavePasswordsOnRotation() {
         app.backend.auth?.signOut()
